@@ -1,31 +1,26 @@
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using RestSharp;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using OpenCvSharp;
 using System.Text;
+using System.Threading.Tasks;
+using RestSharp;
+using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Mvc;
+using OpenCvSharp;
 
-public class ResultsModel : PageModel
+namespace HMDH.Pages
 {
-    private readonly string _apiKey;
+    public class ResultsModel : PageModel
+{
+    private readonly string _apiKey = "AIzaSyAMCuhMSeDuZRdvscIWAwYk9KCrbGJ6hwg";
     private readonly IWebHostEnvironment _environment;
-    private readonly IHttpClientFactory _httpClientFactory;
 
-    // Inject IHttpClientFactory and IWebHostEnvironment into the constructor
-    public ResultsModel(IWebHostEnvironment environment, IHttpClientFactory httpClientFactory)
+    public ResultsModel(IWebHostEnvironment environment)
     {
         _environment = environment;
-        _httpClientFactory = httpClientFactory;
-        _apiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY") ?? throw new Exception("API Key is missing.");
     }
-
     public async Task<IActionResult> OnPostAsync(string Address, int Radius)
     {
         if (!IsInternetAvailable())
@@ -34,25 +29,17 @@ public class ResultsModel : PageModel
             return RedirectToPage("/Error");
         }
 
-        try
-        {
-            // Existing logic for fetching distressed properties
-            (double lat, double lng) = await GetCoordinatesAsync(Address);
-            DistressedProperties = await GetNearbyAddressesAsync(lat, lng, Radius);
+        // Existing logic for fetching distressed properties
+        (double lat, double lng) = await GetCoordinatesAsync(Address);
+        DistressedProperties = await GetNearbyAddressesAsync(lat, lng, Radius);
 
-            if (DistressedProperties.Count > 0)
-            {
-                SaveToCsv(DistressedProperties);
-            }
-
-            IsAnalysisComplete = DistressedProperties.Count > 0;
-            return Page();
-        }
-        catch (Exception ex)
+        if (DistressedProperties.Count > 0)
         {
-            // Log error if any issue arises during processing
-            return RedirectToPage("/Error", new { errorMessage = ex.Message });
+            SaveToCsv(DistressedProperties);
         }
+
+        IsAnalysisComplete = DistressedProperties.Count > 0;
+        return Page();
     }
 
     private bool IsInternetAvailable()
@@ -72,7 +59,6 @@ public class ResultsModel : PageModel
             return false;
         }
     }
-
     public bool IsAnalysisComplete { get; set; }
     public List<DistressedProperty> DistressedProperties { get; set; }
 
@@ -92,7 +78,7 @@ public class ResultsModel : PageModel
                 return (lat, lng);
             }
         }
-        throw new Exception("Failed to fetch coordinates.");
+        throw new System.Exception("Failed to fetch coordinates.");
     }
 
     private async Task<List<DistressedProperty>> GetNearbyAddressesAsync(double lat, double lng, int radius)
@@ -295,7 +281,8 @@ public class ResultsModel : PageModel
     {
         public int Id { get; set; }
         public string Address { get; set; }
-        public List<string> DistressNotes { get; set; }
-        public string ImageUrl { get; set; }
+        public List<string>? DistressNotes { get; set; }
+        public required string ImageUrl { get; set; }
     }
 }
+    }
